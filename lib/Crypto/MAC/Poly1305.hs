@@ -16,7 +16,6 @@ module Crypto.MAC.Poly1305 (
     mac
   ) where
 
-import qualified Data.Bits as B
 import Data.Bits ((.&.), (.|.), (.<<.), (.>>.))
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Internal as BI
@@ -42,7 +41,7 @@ unroll i = case i of
       m -> Just $! (fi m, m .>>. 8)
 {-# INLINE unroll #-}
 
-clamp :: (B.Bits a, Num a) => a -> a
+clamp :: Integer -> Integer
 clamp r = r .&. 0x0ffffffc0ffffffc0ffffffc0fffffff
 {-# INLINE clamp #-}
 
@@ -66,13 +65,13 @@ mac key@(BI.PS _ _ kl) msg
 
             loop !acc !bs = case BS.splitAt 16 bs of
               (chunk@(BI.PS _ _ l), etc)
-                | l == 0 -> acc + s
+                | l == 0 -> BS.take 16 (unroll (acc + s))
                 | otherwise ->
                     let !n = roll chunk .|. (0x01 .<<. (8 * l))
                         !nacc = r * (acc + n) `rem` p
                     in  loop nacc etc
 
-        in  BS.take 16 (unroll (loop 0 msg))
+        in  loop 0 msg
   where
     p = 1361129467683753853853498429727072845819 -- (1 << 130) - 5
 
