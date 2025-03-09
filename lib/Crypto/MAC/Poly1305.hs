@@ -1,3 +1,4 @@
+{-# OPTIONS_HADDOCK prune #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ViewPatterns #-}
@@ -48,16 +49,18 @@ clamp r = r .&. 0x0ffffffc0ffffffc0ffffffc0fffffff
 -- | Produce a Poly1305 MAC for the provided message, given the provided
 --   key.
 --
---   Per RFC8439, the key must be exactly 256 bits in length. Providing
---   an invalid key will cause the function to throw an ErrorCall
---   exception.
+--   Per RFC8439: the key, which is essentially a /one-time/ key, should
+--   be unique, and MUST be unpredictable for each invocation.
 --
---   >>> mac "don't tell anyone my secret key!" "a message needing authentication"
---   ";]\a\USf\132A\156\b\171-_\162-\201R"
+--   The key must be exactly 256 bits in length. Providing an invalid
+--   key will cause the function to throw an ErrorCall exception.
+--
+--   >>> mac "i'll never use this key again!!!" "a message needing authentication"
+--   "O'\231Z\224\149\148\246\203[}\210\203\b\200\207"
 mac
-  :: BS.ByteString -- ^ key
-  -> BS.ByteString -- ^ message
-  -> BS.ByteString -- ^ message authentication code
+  :: BS.ByteString -- ^ 256-bit one-time key
+  -> BS.ByteString -- ^ arbitrary-length message
+  -> BS.ByteString -- ^ 128-bit message authentication code
 mac key@(BI.PS _ _ kl) msg
     | kl /= 32  = error "ppad-poly1305 (mac): invalid key"
     | otherwise =
@@ -74,5 +77,4 @@ mac key@(BI.PS _ _ kl) msg
         in  loop 0 msg
   where
     p = 1361129467683753853853498429727072845819 -- (1 << 130) - 5
-
 
