@@ -1,5 +1,9 @@
 # Changelog
 
+- 0.2.0 (2025-03-10)
+  * Fix a bug in which small produced MAC's were not being padded to 128
+    bits.
+
 - 0.1.0 (2025-03-09)
   * Initial release, supporting the Poly1305 MAC.
 
