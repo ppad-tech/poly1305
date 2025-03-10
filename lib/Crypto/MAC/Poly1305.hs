@@ -42,6 +42,14 @@ unroll i = case i of
       m -> Just $! (fi m, m .>>. 8)
 {-# INLINE unroll #-}
 
+-- little-endian bytestring encoding for 128-bit ints, right-padding
+-- with zeros
+unroll16 :: Integer -> BS.ByteString
+unroll16 (unroll -> u@(BI.PS _ _ l))
+  | l < 16 = u <> BS.replicate (16 - l) 0
+  | otherwise = u
+{-# INLINE unroll16 #-}
+
 clamp :: Integer -> Integer
 clamp r = r .&. 0x0ffffffc0ffffffc0ffffffc0fffffff
 {-# INLINE clamp #-}
@@ -68,7 +76,7 @@ mac key@(BI.PS _ _ kl) msg
 
             loop !acc !bs = case BS.splitAt 16 bs of
               (chunk@(BI.PS _ _ l), etc)
-                | l == 0 -> BS.take 16 (unroll (acc + s))
+                | l == 0 -> BS.take 16 (unroll16 (acc + s))
                 | otherwise ->
                     let !n = roll chunk .|. (0x01 .<<. (8 * l))
                         !nacc = r * (acc + n) `rem` p
