@@ -12,6 +12,7 @@ import qualified Test.Tasty.HUnit as H
 main :: IO ()
 main = defaultMain $ testGroup "ppad-poly1305" [
     mac
+  , mac0
   ]
 
 mac :: TestTree
@@ -24,4 +25,15 @@ mac = H.testCase "mac" $ do
 
       o = Poly1305.mac key msg
   H.assertEqual mempty e o
+
+mac0 :: TestTree
+mac0 = H.testCase "mac (A.3 #1)" $ do
+  let Just key = B16.decode
+        "0000000000000000000000000000000000000000000000000000000000000000"
+      Just msg = B16.decode
+        "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+      Just tag = B16.decode
+        "00000000000000000000000000000000"
+      out = Poly1305.mac key msg
+  H.assertEqual mempty tag out
 
