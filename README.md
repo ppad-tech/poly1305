@@ -56,6 +56,9 @@ which strict constant-timeness can be [challenging to achieve][const].
 Note that *at present* we use GHC's native variable-length Integer type
 internally, and make no guarantees of constant-time execution.
 
+The Poly1305 MAC function and its internals pass all official test
+vectors in RFC8439.
+
 If you discover any vulnerabilities, please disclose them via
 security@ppad.tech.
 
