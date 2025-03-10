@@ -15,6 +15,10 @@
 module Crypto.MAC.Poly1305 (
     -- * Poly1305 message authentication code
     mac
+
+    -- testing
+  , _poly1305_loop
+  , _roll
   ) where
 
 import Data.Bits ((.&.), (.|.), (.<<.), (.>>.))
@@ -26,10 +30,10 @@ fi = fromIntegral
 {-# INLINE fi #-}
 
 -- arbitrary-size little-endian bytestring decoding
-roll :: BS.ByteString -> Integer
-roll = BS.foldr alg 0 where
+_roll :: BS.ByteString -> Integer
+_roll = BS.foldr alg 0 where
   alg (fi -> !b) !a = (a .<<. 8) .|. b
-{-# INLINE roll #-}
+{-# INLINE _roll #-}
 
 -- little-endian bytestring encoding
 unroll :: Integer -> BS.ByteString
@@ -70,19 +74,22 @@ mac
   -> BS.ByteString -- ^ arbitrary-length message
   -> BS.ByteString -- ^ 128-bit message authentication code
 mac key@(BI.PS _ _ kl) msg
-    | kl /= 32  = error "ppad-poly1305 (mac): invalid key"
-    | otherwise =
-        let (clamp . roll -> r, roll -> s) = BS.splitAt 16 key
+  | kl /= 32  = error "ppad-poly1305 (mac): invalid key"
+  | otherwise =
+      let (clamp . _roll -> r, _roll -> s) = BS.splitAt 16 key
+      in  _poly1305_loop r s msg
 
-            loop !acc !bs = case BS.splitAt 16 bs of
-              (chunk@(BI.PS _ _ l), etc)
-                | l == 0 -> BS.take 16 (unroll16 (acc + s))
-                | otherwise ->
-                    let !n = roll chunk .|. (0x01 .<<. (8 * l))
-                        !nacc = r * (acc + n) `rem` p
-                    in  loop nacc etc
-
-        in  loop 0 msg
+_poly1305_loop :: Integer -> Integer -> BS.ByteString -> BS.ByteString
+_poly1305_loop !r !s !msg =
+    let loop !acc !bs = case BS.splitAt 16 bs of
+          (chunk@(BI.PS _ _ l), etc)
+            | l == 0 -> BS.take 16 (unroll16 (acc + s))
+            | otherwise ->
+                let !n = _roll chunk .|. (0x01 .<<. (8 * l))
+                    !nacc = r * (acc + n) `rem` p
+                in  loop nacc etc
+    in  loop 0 msg
   where
     p = 1361129467683753853853498429727072845819 -- (1 << 130) - 5
+{-# INLINE _poly1305_loop #-}
 
