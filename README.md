@@ -56,8 +56,10 @@ which strict constant-timeness can be [challenging to achieve][const].
 Note that *at present* we use GHC's native variable-length Integer type
 internally, and make no guarantees of constant-time execution.
 
-The Poly1305 MAC function and its internals pass all official test
-vectors in RFC8439.
+The Poly1305 MAC function and its internals pass all official
+test vectors in RFC8439, and the downstream AEAD-ChaCha20-Poly1305
+implementation in [ppad-aead](https://github.com/ppad-tech/aead) passes
+all the [Project Wycheproof vectors][wyche].
 
 If you discover any vulnerabilities, please disclose them via
 security@ppad.tech.
@@ -84,3 +86,4 @@ to get a REPL for the main library.
 [flake]: https://nixos.org/manual/nix/unstable/command-ref/new-cli/nix3-flake.html
 [hadoc]: https://docs.ppad.tech/poly1305
 [const]: https://www.chosenplaintext.ca/articles/beginners-guide-constant-time-cryptography.html
+[wyche]: https://github.com/C2SP/wycheproof
