@@ -64,8 +64,7 @@ clamp r = r .&. 0x0ffffffc0ffffffc0ffffffc0fffffff
 --   Per RFC8439: the key, which is essentially a /one-time/ key, should
 --   be unique, and MUST be unpredictable for each invocation.
 --
---   The key must be exactly 256 bits in length. Providing an invalid
---   key will cause the function to throw an ErrorCall exception.
+--   The key must be exactly 256 bits in length.
 --
 --   >>> mac "i'll never use this key again!!!" "a message needing authentication"
 --   Just "O'\231Z\224\149\148\246\203[}\210\203\b\200\207"
