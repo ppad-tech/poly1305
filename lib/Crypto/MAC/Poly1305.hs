@@ -68,16 +68,16 @@ clamp r = r .&. 0x0ffffffc0ffffffc0ffffffc0fffffff
 --   key will cause the function to throw an ErrorCall exception.
 --
 --   >>> mac "i'll never use this key again!!!" "a message needing authentication"
---   "O'\231Z\224\149\148\246\203[}\210\203\b\200\207"
+--   Just "O'\231Z\224\149\148\246\203[}\210\203\b\200\207"
 mac
   :: BS.ByteString -- ^ 256-bit one-time key
   -> BS.ByteString -- ^ arbitrary-length message
-  -> BS.ByteString -- ^ 128-bit message authentication code
+  -> Maybe BS.ByteString -- ^ 128-bit message authentication code
 mac key@(BI.PS _ _ kl) msg
-  | kl /= 32  = error "ppad-poly1305 (mac): invalid key"
+  | kl /= 32  = Nothing
   | otherwise =
       let (clamp . _roll -> r, _roll -> s) = BS.splitAt 16 key
-      in  _poly1305_loop r s msg
+      in  pure (_poly1305_loop r s msg)
 
 _poly1305_loop :: Integer -> Integer -> BS.ByteString -> BS.ByteString
 _poly1305_loop !r !s !msg =

@@ -21,7 +21,7 @@ A sample GHCi session:
   > let key = "i'll never use this key again!!!"
   > let msg = "i am a message that is in need of authentication"
   > Poly1305.mac key msg
-  "\247\247\GSZ^\140\168\r\177\197\242\182b#\210g"
+  Just "\247\247\GSZ^\140\168\r\177\197\242\182b#\210g"
 ```
 
 ## Documentation

@@ -22,6 +22,10 @@ key_small :: BS.ByteString
 key_small = fromJust . B16.decode $
   "0000000000000000000000000000000000000000000000000000000000000003"
 
+key_mid :: BS.ByteString
+key_mid = fromJust . B16.decode $
+  "8888888888888888888888888888888888888888888888888888888888888883"
+
 key_big :: BS.ByteString
 key_big = fromJust . B16.decode $
   "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3"
@@ -30,6 +34,7 @@ suite :: Benchmark
 suite =
   bgroup "ppad-poly1305" [
     bench "mac (small key)" $ nf (Poly1305.mac key_small) msg
+  , bench "mac (mid key)" $ nf (Poly1305.mac key_mid) msg
   , bench "mac (big key)" $ nf (Poly1305.mac key_big) msg
   ]
 
