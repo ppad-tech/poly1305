@@ -1,5 +1,9 @@
 # Changelog
 
+- 0.3.0 (2025-06-21)
+  * The 'mac' function is now total, returning 'Nothing' when supplied
+    with an invalid-length one-time key.
+
 - 0.2.0 (2025-03-10)
   * Fix a bug in which small produced MAC's were not being padded to 128
     bits.

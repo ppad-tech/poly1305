@@ -35,16 +35,15 @@ The aim is best-in-class performance for pure, highly-auditable Haskell
 code.
 
 Current benchmark figures on the simple "sunscreen input" from RFC8439
-on my mid-2020 MacBook Air look like (use `cabal bench` to run the
+on an M4 Silicon MacBook Air look like (use `cabal bench` to run the
 benchmark suite):
 
 ```
-  benchmarking ppad-poly1305/mac
-  time                 9.880 μs   (9.596 μs .. 10.11 μs)
-                       0.995 R²   (0.993 R² .. 0.997 R²)
-  mean                 9.663 μs   (9.471 μs .. 9.879 μs)
-  std dev              715.4 ns   (629.7 ns .. 828.0 ns)
-  variance introduced by outliers: 77% (severely inflated)
+  benchmarking ppad-poly1305/mac (big key)
+  time                 3.491 μs   (3.487 μs .. 3.495 μs)
+                       1.000 R²   (1.000 R² .. 1.000 R²)
+  mean                 3.489 μs   (3.484 μs .. 3.493 μs)
+  std dev              15.51 ns   (12.66 ns .. 19.80 ns)
 ```
 
 ## Security
