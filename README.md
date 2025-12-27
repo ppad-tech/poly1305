@@ -52,13 +52,34 @@ This library aims at the maximum security achievable in a
 garbage-collected language under an optimizing compiler such as GHC, in
 which strict constant-timeness can be [challenging to achieve][const].
 
-Note that *at present* we use GHC's native variable-length Integer type
-internally, and make no guarantees of constant-time execution.
-
 The Poly1305 MAC function and its internals pass all official
 test vectors in RFC8439, and the downstream AEAD-ChaCha20-Poly1305
 implementation in [ppad-aead](https://github.com/ppad-tech/aead) passes
 all the [Project Wycheproof vectors][wyche].
+
+Fixed-width words and constant-time primitives are supplied by
+[ppad-fixed][fixed]. Criterion benchmarks provide sanity checks of
+constant-time execution:
+
+```
+  benchmarking ppad-poly1305/mac (small key)
+  time                 131.7 ns   (131.6 ns .. 131.9 ns)
+                       1.000 R²   (1.000 R² .. 1.000 R²)
+  mean                 131.6 ns   (131.4 ns .. 131.9 ns)
+  std dev              689.1 ps   (544.4 ps .. 1.022 ns)
+
+  benchmarking ppad-poly1305/mac (mid key)
+  time                 132.4 ns   (132.1 ns .. 132.6 ns)
+                       1.000 R²   (1.000 R² .. 1.000 R²)
+  mean                 132.0 ns   (131.8 ns .. 132.2 ns)
+  std dev              539.4 ps   (450.7 ps .. 667.1 ps)
+
+  benchmarking ppad-poly1305/mac (big key)
+  time                 131.8 ns   (131.6 ns .. 132.0 ns)
+                       1.000 R²   (1.000 R² .. 1.000 R²)
+  mean                 131.9 ns   (131.8 ns .. 132.1 ns)
+  std dev              594.3 ps   (464.5 ps .. 816.3 ps)
+```
 
 If you discover any vulnerabilities, please disclose them via
 security@ppad.tech.
@@ -86,3 +107,4 @@ to get a REPL for the main library.
 [hadoc]: https://docs.ppad.tech/poly1305
 [const]: https://www.chosenplaintext.ca/articles/beginners-guide-constant-time-cryptography.html
 [wyche]: https://github.com/C2SP/wycheproof
+[fixed]: https://github.com/ppad-tech/fixed
