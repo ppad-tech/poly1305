@@ -31,8 +31,7 @@ Haddocks (API documentation, etc.) are hosted at
 
 ## Performance
 
-The aim is best-in-class performance for pure, highly-auditable Haskell
-code.
+The aim is best-in-class performance for pure Haskell code.
 
 Current benchmark figures on the simple "sunscreen input" from RFC8439
 on an M4 Silicon MacBook Air look like (use `cabal bench` to run the
