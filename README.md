@@ -40,10 +40,10 @@ benchmark suite):
 
 ```
   benchmarking ppad-poly1305/mac (big key)
-  time                 3.491 μs   (3.487 μs .. 3.495 μs)
+  time                 131.8 ns   (131.6 ns .. 132.0 ns)
                        1.000 R²   (1.000 R² .. 1.000 R²)
-  mean                 3.489 μs   (3.484 μs .. 3.493 μs)
-  std dev              15.51 ns   (12.66 ns .. 19.80 ns)
+  mean                 131.9 ns   (131.8 ns .. 132.1 ns)
+  std dev              594.3 ps   (464.5 ps .. 816.3 ps)
 ```
 
 ## Security
