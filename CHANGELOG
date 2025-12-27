@@ -1,5 +1,10 @@
 # Changelog
 
+- 0.4.0 (2025-12-27)
+  * Switches from variable-size 'Integer' to fixed-width words and
+    constant-time primitives supplied by ppad-fixed. The implementation now
+    runs about 25x faster and in time constant with respect to secrets.
+
 - 0.3.0 (2025-06-21)
   * The 'mac' function is now total, returning 'Nothing' when supplied
     with an invalid-length one-time key.
