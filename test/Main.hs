@@ -83,9 +83,9 @@ mac4 = H.testCase "mac (A.3 #4)" $ do
 
 mac5 :: TestTree
 mac5 = H.testCase "mac (A.3 #5)" $ do
-  let Just (Poly1305._roll -> r) = B16.decode $
+  let Just (Poly1305._roll16 -> r) = B16.decode $
         "02000000000000000000000000000000"
-      Just (Poly1305._roll -> s) = B16.decode $
+      Just (Poly1305._roll16 -> s) = B16.decode $
         "00000000000000000000000000000000"
       Just msg = B16.decode
         "ffffffffffffffffffffffffffffffff"
@@ -96,9 +96,9 @@ mac5 = H.testCase "mac (A.3 #5)" $ do
 
 mac6 :: TestTree
 mac6 = H.testCase "mac (A.3 #6)" $ do
-  let Just (Poly1305._roll -> r) = B16.decode $
+  let Just (Poly1305._roll16 -> r) = B16.decode $
         "02000000000000000000000000000000"
-      Just (Poly1305._roll -> s) = B16.decode $
+      Just (Poly1305._roll16 -> s) = B16.decode $
         "ffffffffffffffffffffffffffffffff"
       Just msg = B16.decode
         "02000000000000000000000000000000"
@@ -109,9 +109,9 @@ mac6 = H.testCase "mac (A.3 #6)" $ do
 
 mac7 :: TestTree
 mac7 = H.testCase "mac (A.3 #7)" $ do
-  let Just (Poly1305._roll -> r) = B16.decode $
+  let Just (Poly1305._roll16 -> r) = B16.decode $
         "01000000000000000000000000000000"
-      Just (Poly1305._roll -> s) = B16.decode $
+      Just (Poly1305._roll16 -> s) = B16.decode $
         "00000000000000000000000000000000"
       Just msg = B16.decode
         "fffffffffffffffffffffffffffffffff0ffffffffffffffffffffffffffffff11000000000000000000000000000000"
@@ -122,9 +122,9 @@ mac7 = H.testCase "mac (A.3 #7)" $ do
 
 mac8 :: TestTree
 mac8 = H.testCase "mac (A.3 #8)" $ do
-  let Just (Poly1305._roll -> r) = B16.decode $
+  let Just (Poly1305._roll16 -> r) = B16.decode $
         "01000000000000000000000000000000"
-      Just (Poly1305._roll -> s) = B16.decode $
+      Just (Poly1305._roll16 -> s) = B16.decode $
         "00000000000000000000000000000000"
       Just msg = B16.decode
         "fffffffffffffffffffffffffffffffffbfefefefefefefefefefefefefefefe01010101010101010101010101010101"
@@ -135,9 +135,9 @@ mac8 = H.testCase "mac (A.3 #8)" $ do
 
 mac9 :: TestTree
 mac9 = H.testCase "mac (A.3 #9)" $ do
-  let Just (Poly1305._roll -> r) = B16.decode $
+  let Just (Poly1305._roll16 -> r) = B16.decode $
         "02000000000000000000000000000000"
-      Just (Poly1305._roll -> s) = B16.decode $
+      Just (Poly1305._roll16 -> s) = B16.decode $
         "00000000000000000000000000000000"
       Just msg = B16.decode
         "fdffffffffffffffffffffffffffffff"
@@ -148,9 +148,9 @@ mac9 = H.testCase "mac (A.3 #9)" $ do
 
 mac10 :: TestTree
 mac10 = H.testCase "mac (A.3 #10)" $ do
-  let Just (Poly1305._roll -> r) = B16.decode $
+  let Just (Poly1305._roll16 -> r) = B16.decode $
         "01000000000000000400000000000000"
-      Just (Poly1305._roll -> s) = B16.decode $
+      Just (Poly1305._roll16 -> s) = B16.decode $
         "00000000000000000000000000000000"
       Just msg = B16.decode
         "e33594d7505e43b900000000000000003394d7505e4379cd01000000000000000000000000000000000000000000000001000000000000000000000000000000"
@@ -161,9 +161,9 @@ mac10 = H.testCase "mac (A.3 #10)" $ do
 
 mac11 :: TestTree
 mac11 = H.testCase "mac (A.3 #11)" $ do
-  let Just (Poly1305._roll -> r) = B16.decode $
+  let Just (Poly1305._roll16 -> r) = B16.decode $
         "01000000000000000400000000000000"
-      Just (Poly1305._roll -> s) = B16.decode $
+      Just (Poly1305._roll16 -> s) = B16.decode $
         "00000000000000000000000000000000"
       Just msg = B16.decode
         "e33594d7505e43b900000000000000003394d7505e4379cd010000000000000000000000000000000000000000000000"

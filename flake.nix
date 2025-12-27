@@ -8,6 +8,12 @@
       ref  = "master";
       inputs.ppad-nixpkgs.follows = "ppad-nixpkgs";
     };
+    ppad-fixed = {
+      type = "git";
+      url  = "git://git.ppad.tech/fixed.git";
+      ref  = "master";
+      inputs.ppad-nixpkgs.follows = "ppad-nixpkgs";
+    };
     ppad-nixpkgs = {
       type = "git";
       url  = "git://git.ppad.tech/nixpkgs.git";
@@ -18,7 +24,7 @@
   };
 
   outputs = { self, nixpkgs, flake-utils, ppad-nixpkgs
-            , ppad-base16
+            , ppad-base16, ppad-fixed
             }:
     flake-utils.lib.eachDefaultSystem (system:
       let
@@ -26,10 +32,20 @@
 
         pkgs = import nixpkgs { inherit system; };
         hlib = pkgs.haskell.lib;
+        llvm = pkgs.llvmPackages_15.llvm;
+
+        fixed = ppad-fixed.packages.${system}.default;
+        fixed-llvm =
+          hlib.addBuildTools
+            (hlib.enableCabalFlag fixed "llvm")
+            [ llvm ];
 
         hpkgs = pkgs.haskell.packages.ghc981.extend (new: old: {
-          ${lib} = old.callCabal2nixWithOptions lib ./. "--enable-profiling" {};
           ppad-base16 = ppad-base16.packages.${system}.default;
+          ppad-fixed  = fixed-llvm;
+          ${lib} = new.callCabal2nixWithOptions lib ./. "--enable-profiling" {
+            ppad-fixed = new.ppad-fixed;
+          };
         });
 
         cc    = pkgs.stdenv.cc;
@@ -47,9 +63,8 @@
             buildInputs = [
               cabal
               cc
+              llvm
             ];
-
-            inputsFrom = builtins.attrValues self.packages.${system};
 
             doBenchmark = true;
 
@@ -59,6 +74,7 @@
               echo "cc:    $(${cc}/bin/cc --version)"
               echo "ghc:   $(${ghc}/bin/ghc --version)"
               echo "cabal: $(${cabal}/bin/cabal --version)"
+              echo "llc:   $(${llvm}/bin/llc --version | head -2 | tail -1)"
             '';
           };
         }
