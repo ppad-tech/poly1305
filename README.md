@@ -39,10 +39,10 @@ benchmark suite):
 
 ```
   benchmarking ppad-poly1305/mac (big key)
-  time                 131.8 ns   (131.6 ns .. 132.0 ns)
+  time                 125.1 ns   (124.9 ns .. 125.4 ns)
                        1.000 R²   (1.000 R² .. 1.000 R²)
-  mean                 131.9 ns   (131.8 ns .. 132.1 ns)
-  std dev              594.3 ps   (464.5 ps .. 816.3 ps)
+  mean                 125.4 ns   (125.0 ns .. 126.2 ns)
+  std dev              1.530 ns   (216.3 ps .. 2.693 ns)
 ```
 
 ## Security
@@ -62,22 +62,23 @@ constant-time execution:
 
 ```
   benchmarking ppad-poly1305/mac (small key)
-  time                 131.7 ns   (131.6 ns .. 131.9 ns)
+  time                 125.1 ns   (124.9 ns .. 125.4 ns)
                        1.000 R²   (1.000 R² .. 1.000 R²)
-  mean                 131.6 ns   (131.4 ns .. 131.9 ns)
-  std dev              689.1 ps   (544.4 ps .. 1.022 ns)
+  mean                 125.1 ns   (125.0 ns .. 125.4 ns)
+  std dev              524.6 ps   (180.6 ps .. 1.132 ns)
 
   benchmarking ppad-poly1305/mac (mid key)
-  time                 132.4 ns   (132.1 ns .. 132.6 ns)
+  time                 125.2 ns   (124.9 ns .. 125.4 ns)
                        1.000 R²   (1.000 R² .. 1.000 R²)
-  mean                 132.0 ns   (131.8 ns .. 132.2 ns)
-  std dev              539.4 ps   (450.7 ps .. 667.1 ps)
+  mean                 125.1 ns   (125.1 ns .. 125.3 ns)
+  std dev              441.3 ps   (195.0 ps .. 755.1 ps)
 
   benchmarking ppad-poly1305/mac (big key)
-  time                 131.8 ns   (131.6 ns .. 132.0 ns)
+  time                 125.1 ns   (124.9 ns .. 125.4 ns)
                        1.000 R²   (1.000 R² .. 1.000 R²)
-  mean                 131.9 ns   (131.8 ns .. 132.1 ns)
-  std dev              594.3 ps   (464.5 ps .. 816.3 ps)
+  mean                 125.4 ns   (125.0 ns .. 126.2 ns)
+  std dev              1.530 ns   (216.3 ps .. 2.693 ns)
+  variance introduced by outliers: 12% (moderately inflated)
 ```
 
 If you discover any vulnerabilities, please disclose them via
