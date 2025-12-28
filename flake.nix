@@ -31,20 +31,21 @@
         lib = "ppad-poly1305";
 
         pkgs = import nixpkgs { inherit system; };
-        hlib = pkgs.haskell.lib;
-        llvm = pkgs.llvmPackages_19.llvm;
+        hlib  = pkgs.haskell.lib;
+        llvm  = pkgs.llvmPackages_19.llvm;
+        clang = pkgs.llvmPackages_19.clang;
 
         base16 = ppad-base16.packages.${system}.default;
         base16-llvm =
           hlib.addBuildTools
             (hlib.enableCabalFlag base16 "llvm")
-            [ llvm ];
+            [ llvm clang ];
 
         fixed = ppad-fixed.packages.${system}.default;
         fixed-llvm =
           hlib.addBuildTools
             (hlib.enableCabalFlag fixed "llvm")
-            [ llvm ];
+            [ llvm clang ];
 
         hpkgs = pkgs.haskell.packages.ghc910.extend (new: old: {
           ppad-base16 = base16-llvm;
