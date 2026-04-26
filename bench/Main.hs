@@ -1,13 +1,18 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
+import Control.DeepSeq
 import Criterion.Main
 import qualified Crypto.MAC.Poly1305 as Poly1305
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Base16 as B16
 import Data.Maybe (fromJust)
+
+instance NFData Poly1305.MAC where
+  rnf (Poly1305.MAC b) = rnf b
 
 main :: IO ()
 main = defaultMain [

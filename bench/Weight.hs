@@ -1,11 +1,16 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
+import Control.DeepSeq
 import qualified Crypto.MAC.Poly1305 as Poly1305
 import qualified Data.ByteString as BS
 import Weigh
+
+instance NFData Poly1305.MAC where
+  rnf (Poly1305.MAC b) = rnf b
 
 -- note that 'weigh' doesn't work properly in a repl
 main :: IO ()

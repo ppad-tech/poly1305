@@ -35,7 +35,7 @@ mac = H.testCase "mac" $ do
       Just e = B16.decode "a8061dc1305136c6c22b8baf0c0127a9"
 
       Just o = Poly1305.mac key msg
-  H.assertEqual mempty e o
+  H.assertEqual mempty (Poly1305.MAC e) o
 
 mac1 :: TestTree
 mac1 = H.testCase "mac (A.3 #1)" $ do
@@ -46,7 +46,7 @@ mac1 = H.testCase "mac (A.3 #1)" $ do
       Just tag = B16.decode
         "00000000000000000000000000000000"
       Just out = Poly1305.mac key msg
-  H.assertEqual mempty tag out
+  H.assertEqual mempty (Poly1305.MAC tag) out
 
 mac2 :: TestTree
 mac2 = H.testCase "mac (A.3 #2)" $ do
@@ -57,7 +57,7 @@ mac2 = H.testCase "mac (A.3 #2)" $ do
       Just tag = B16.decode
         "36e5f6b5c5e06070f0efca96227a863e"
       Just out = Poly1305.mac key msg
-  H.assertEqual mempty tag out
+  H.assertEqual mempty (Poly1305.MAC tag) out
 
 mac3 :: TestTree
 mac3 = H.testCase "mac (A.3 #3)" $ do
@@ -68,7 +68,7 @@ mac3 = H.testCase "mac (A.3 #3)" $ do
       Just tag = B16.decode
         "f3477e7cd95417af89a6b8794c310cf0"
       Just out = Poly1305.mac key msg
-  H.assertEqual mempty tag out
+  H.assertEqual mempty (Poly1305.MAC tag) out
 
 mac4 :: TestTree
 mac4 = H.testCase "mac (A.3 #4)" $ do
@@ -79,7 +79,7 @@ mac4 = H.testCase "mac (A.3 #4)" $ do
       Just tag = B16.decode
         "4541669a7eaaee61e708dc7cbcc5eb62"
       Just out = Poly1305.mac key msg
-  H.assertEqual mempty tag out
+  H.assertEqual mempty (Poly1305.MAC tag) out
 
 mac5 :: TestTree
 mac5 = H.testCase "mac (A.3 #5)" $ do
