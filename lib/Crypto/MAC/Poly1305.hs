@@ -1,5 +1,7 @@
 {-# OPTIONS_HADDOCK prune #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE ViewPatterns #-}
@@ -16,13 +18,15 @@
 
 module Crypto.MAC.Poly1305 (
     -- * Poly1305 message authentication code
-    mac
+    MAC(..)
+  , mac
 
     -- testing
   , _poly1305_loop
   , _roll16
   ) where
 
+import qualified Data.Bits as B
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Internal as BI
 import qualified Data.ByteString.Unsafe as BU
@@ -129,11 +133,35 @@ clamp :: Wider -> Wider
 clamp r = r `W.and` 0x0ffffffc0ffffffc0ffffffc0fffffff
 {-# INLINE clamp #-}
 
--- | Produce a Poly1305 MAC for the provided message, given the provided
---   key.
+-- | A Poly1305 message authentication code.
 --
---   Per RFC8439: the key, which is essentially a /one-time/ key, should
---   be unique, and MUST be unpredictable for each invocation.
+--   Note that you should compare MACs for equality using the 'Eq'
+--   instance, which performs the comparison in constant time, instead
+--   of unwrapping and comparing the underlying 'ByteStrings'.
+--
+--   >>> let Just foo@(MAC bs0) = mac key "hi"
+--   >>> let Just bar@(MAC bs1) = mac key "there"
+--   >>> foo == bar -- do this
+--   False
+--   >>> bs0 == bs1 -- don't do this
+--   False
+newtype MAC = MAC BS.ByteString
+  deriving newtype Show
+
+instance Eq MAC where
+  -- | A constant-time equality check for message authentication codes.
+  --
+  --   Runs in variable-time only for invalid inputs.
+  (MAC a@(BI.PS _ _ la)) == (MAC b@(BI.PS _ _ lb))
+    | la /= lb  = False
+    | otherwise =
+        BS.foldl' (B..|.) 0 (BS.packZipWith B.xor a b) == 0
+
+-- | Produce a Poly1305 MAC for the provided message, given the
+--   provided key.
+--
+--   Per RFC8439: the key, which is essentially a /one-time/ key,
+--   should be unique, and MUST be unpredictable for each invocation.
 --
 --   The key must be exactly 256 bits in length.
 --
@@ -142,12 +170,12 @@ clamp r = r `W.and` 0x0ffffffc0ffffffc0ffffffc0fffffff
 mac
   :: BS.ByteString -- ^ 256-bit one-time key
   -> BS.ByteString -- ^ arbitrary-length message
-  -> Maybe BS.ByteString -- ^ 128-bit message authentication code
+  -> Maybe MAC     -- ^ 128-bit message authentication code
 mac key@(BI.PS _ _ kl) msg
   | kl /= 32  = Nothing
   | otherwise =
       let (clamp . _roll16 -> r, _roll16 -> s) = BS.splitAt 16 key
-      in  pure (_poly1305_loop r s msg)
+      in  pure $! (MAC (_poly1305_loop r s msg))
 
 -- p = 2^130 - 5
 --
