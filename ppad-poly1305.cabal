@@ -19,6 +19,11 @@ flag llvm
   default:     False
   manual:      True
 
+flag sanitize
+  description: Build with AddressSanitizer and UndefinedBehaviorSanitizer.
+  default:     False
+  manual:      True
+
 source-repository head
   type:     git
   location: git.ppad.tech/poly1305.git
@@ -32,10 +37,18 @@ library
     ghc-options: -fllvm -O2
   exposed-modules:
       Crypto.MAC.Poly1305
+      Crypto.MAC.Poly1305.Arm
   build-depends:
       base >= 4.9 && < 5
     , bytestring >= 0.9 && < 0.13
     , ppad-fixed >= 0.1.3 && < 0.2
+  c-sources:
+      cbits/poly1305_arm.c
+  if arch(aarch64)
+    cc-options: -march=armv8-a
+  if flag(sanitize)
+    cc-options: -fsanitize=address,undefined -fno-omit-frame-pointer
+    ghc-options: -optl=-fsanitize=address,undefined
 
 test-suite poly1305-tests
   type:                exitcode-stdio-1.0
@@ -45,6 +58,8 @@ test-suite poly1305-tests
 
   ghc-options:
     -rtsopts -Wall -O2
+  if flag(sanitize)
+    ghc-options: -optl=-fsanitize=address,undefined
 
   build-depends:
       base
