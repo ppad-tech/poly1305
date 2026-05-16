@@ -1,5 +1,5 @@
 {
-  description = "A pure Haskell Poly1305 message authentication code.";
+  description = "A fast Haskell Poly1305 message authentication code.";
 
   inputs = {
     ppad-base16 = {

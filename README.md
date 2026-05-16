@@ -4,7 +4,7 @@
 ![](https://img.shields.io/badge/license-MIT-brightgreen)
 [![](https://img.shields.io/badge/haddock-poly1305-lightblue)](https://docs.ppad.tech/poly1305)
 
-A pure Haskell implementation of the Poly1305 message authentication
+A fast Haskell implementation of the Poly1305 message authentication
 code as specified by [RFC8439][8439].
 
 ## Usage
@@ -31,19 +31,37 @@ Haddocks (API documentation, etc.) are hosted at
 
 ## Performance
 
-The aim is best-in-class performance for pure Haskell code.
-
-Current benchmark figures on the simple "sunscreen input" from RFC8439
-on an M4 Silicon MacBook Air look like (use `cabal bench` to run the
-benchmark suite):
+The aim is best-in-class performance. Current benchmark figures on the
+simple "sunscreen input" from RFC8439 on an M4 Silicon MacBook Air,
+where we avail of hardware acceleration via ARM NEON intrinsics, look
+like (use `cabal bench` to run the benchmark suite):
 
 ```
   benchmarking ppad-poly1305/mac (big key)
-  time                 125.1 ns   (124.9 ns .. 125.4 ns)
+  time                 67.61 ns   (67.41 ns .. 67.86 ns)
                        1.000 R²   (1.000 R² .. 1.000 R²)
-  mean                 125.4 ns   (125.0 ns .. 126.2 ns)
-  std dev              1.530 ns   (216.3 ps .. 2.693 ns)
+  mean                 67.67 ns   (67.50 ns .. 67.96 ns)
+  std dev              742.4 ps   (489.7 ps .. 1.169 ns)
 ```
+
+On longer inputs the NEON 4-way parallel kernel kicks in, with
+correspondingly better throughput:
+
+```
+  benchmarking ppad-poly1305/mac (1024B msg)
+  time                 224.9 ns   (224.5 ns .. 225.5 ns)
+                       1.000 R²   (1.000 R² .. 1.000 R²)
+  mean                 224.9 ns   (224.6 ns .. 225.5 ns)
+  std dev              1.300 ns   (577.5 ps .. 2.512 ns)
+
+  benchmarking ppad-poly1305/mac (4096B msg)
+  time                 827.1 ns   (824.4 ns .. 831.0 ns)
+                       1.000 R²   (1.000 R² .. 1.000 R²)
+  mean                 825.1 ns   (824.3 ns .. 826.7 ns)
+  std dev              3.649 ns   (2.093 ns .. 6.829 ns)
+```
+
+You should compile with the 'llvm' flag for maximum performance.
 
 ## Security
 
@@ -62,23 +80,22 @@ constant-time execution:
 
 ```
   benchmarking ppad-poly1305/mac (small key)
-  time                 125.1 ns   (124.9 ns .. 125.4 ns)
+  time                 67.91 ns   (67.56 ns .. 68.30 ns)
                        1.000 R²   (1.000 R² .. 1.000 R²)
-  mean                 125.1 ns   (125.0 ns .. 125.4 ns)
-  std dev              524.6 ps   (180.6 ps .. 1.132 ns)
+  mean                 67.60 ns   (67.47 ns .. 67.77 ns)
+  std dev              505.8 ps   (380.4 ps .. 754.9 ps)
 
   benchmarking ppad-poly1305/mac (mid key)
-  time                 125.2 ns   (124.9 ns .. 125.4 ns)
-                       1.000 R²   (1.000 R² .. 1.000 R²)
-  mean                 125.1 ns   (125.1 ns .. 125.3 ns)
-  std dev              441.3 ps   (195.0 ps .. 755.1 ps)
+  time                 67.72 ns   (67.52 ns .. 68.03 ns)
+                       1.000 R²   (0.999 R² .. 1.000 R²)
+  mean                 68.07 ns   (67.72 ns .. 69.24 ns)
+  std dev              1.978 ns   (619.1 ps .. 4.006 ns)
 
   benchmarking ppad-poly1305/mac (big key)
-  time                 125.1 ns   (124.9 ns .. 125.4 ns)
+  time                 67.61 ns   (67.41 ns .. 67.86 ns)
                        1.000 R²   (1.000 R² .. 1.000 R²)
-  mean                 125.4 ns   (125.0 ns .. 126.2 ns)
-  std dev              1.530 ns   (216.3 ps .. 2.693 ns)
-  variance introduced by outliers: 12% (moderately inflated)
+  mean                 67.67 ns   (67.50 ns .. 67.96 ns)
+  std dev              742.4 ps   (489.7 ps .. 1.169 ns)
 ```
 
 If you discover any vulnerabilities, please disclose them via
