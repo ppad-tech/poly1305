@@ -1,7 +1,7 @@
 cabal-version:      3.0
 name:               ppad-poly1305
 version:            0.4.1
-synopsis:           A pure Poly1305 MAC
+synopsis:           A fast Poly1305 MAC
 license:            MIT
 license-file:       LICENSE
 author:             Jared Tobin
@@ -11,7 +11,7 @@ build-type:         Simple
 tested-with:        GHC == 9.10.3
 extra-doc-files:    CHANGELOG
 description:
-  A pure Poly1305 message authentication code, per
+  A fast Poly1305 message authentication code, per
   [RFC8439](https://datatracker.ietf.org/doc/html/rfc8439).
 
 flag llvm

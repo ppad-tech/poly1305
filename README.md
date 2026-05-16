@@ -4,7 +4,7 @@
 ![](https://img.shields.io/badge/license-MIT-brightgreen)
 [![](https://img.shields.io/badge/haddock-poly1305-lightblue)](https://docs.ppad.tech/poly1305)
 
-A pure Haskell implementation of the Poly1305 message authentication
+A fast Haskell implementation of the Poly1305 message authentication
 code as specified by [RFC8439][8439].
 
 ## Usage
@@ -31,7 +31,7 @@ Haddocks (API documentation, etc.) are hosted at
 
 ## Performance
 
-The aim is best-in-class performance for pure Haskell code.
+The aim is best-in-class performance.
 
 Current benchmark figures on the simple "sunscreen input" from RFC8439
 on an M4 Silicon MacBook Air look like (use `cabal bench` to run the
