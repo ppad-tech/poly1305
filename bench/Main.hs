@@ -35,11 +35,19 @@ key_big :: BS.ByteString
 key_big = fromJust . B16.decode $
   "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff3"
 
+msg_1k :: BS.ByteString
+msg_1k = BS.replicate 1024 0x42
+
+msg_4k :: BS.ByteString
+msg_4k = BS.replicate 4096 0x42
+
 suite :: Benchmark
 suite =
   bgroup "ppad-poly1305" [
     bench "mac (small key)" $ nf (Poly1305.mac key_small) msg
   , bench "mac (mid key)" $ nf (Poly1305.mac key_mid) msg
   , bench "mac (big key)" $ nf (Poly1305.mac key_big) msg
+  , bench "mac (1024B msg)" $ nf (Poly1305.mac key_big) msg_1k
+  , bench "mac (4096B msg)" $ nf (Poly1305.mac key_big) msg_4k
   ]
 
