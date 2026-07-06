@@ -31,7 +31,7 @@ import qualified Data.Bits as B
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Internal as BI
 import qualified Data.ByteString.Unsafe as BU
-import Data.Word (Word8, Word64)
+import Data.Word (Word8)
 import Data.Word.Limb (Limb(..))
 import qualified Data.Word.Limb as L
 import Data.Word.Wider (Wider(..))
@@ -134,24 +134,6 @@ clamp :: Wider -> Wider
 clamp r = r `W.and` 0x0ffffffc0ffffffc0ffffffc0fffffff
 {-# INLINE clamp #-}
 
--- | Assemble the 64-bit word at the given byte offset, little-endian.
---
---   Byte order is immaterial to an equality test as long as both
---   operands are assembled the same way; this is used only by the
---   constant-time 'MAC' comparison. The length is not checked.
-word64le :: BS.ByteString -> Int -> Word64
-word64le bs m =
-  let ix k = fromIntegral (BU.unsafeIndex bs (m + k)) :: Word64
-  in        ix 0
-      B..|. (ix 1 `B.unsafeShiftL` 0x08)
-      B..|. (ix 2 `B.unsafeShiftL` 0x10)
-      B..|. (ix 3 `B.unsafeShiftL` 0x18)
-      B..|. (ix 4 `B.unsafeShiftL` 0x20)
-      B..|. (ix 5 `B.unsafeShiftL` 0x28)
-      B..|. (ix 6 `B.unsafeShiftL` 0x30)
-      B..|. (ix 7 `B.unsafeShiftL` 0x38)
-{-# INLINE word64le #-}
-
 -- | A Poly1305 message authentication code.
 --
 --   Note that you should compare MACs for equality using the 'Eq'
@@ -172,26 +154,13 @@ instance Eq MAC where
   --
   --   Runs in variable-time only for invalid inputs.
   (MAC a@(BI.PS _ _ la)) == (MAC b@(BI.PS _ _ lb))
-      | la /= lb   = False
-      | la == 16   =
-          -- fully-unrolled, fixed OR-tree over two 64-bit lanes. A
-          -- standard 16-byte tag folds through no loop-carried
-          -- accumulator, so there is no per-byte accumulator whose
-          -- nonzero span tracks the position of a differing byte:
-          -- the comparison time is independent of where (or whether)
-          -- the tags differ.
-          let !d0 = B.xor (word64le a 0) (word64le b 0)
-              !d1 = B.xor (word64le a 8) (word64le b 8)
-          in  (d0 B..|. d1) == 0
-      | otherwise  = go 0 0
+      | la /= lb  = False
+      | otherwise = go 0 0
     where
-      -- byte-serial fallback for nonstandard tag lengths. 'mac'
-      -- always yields 16 bytes, so this path is unreachable through
-      -- it; it exists only to keep the instance total for MACs built
-      -- directly via the exported constructor. The fused fold ORs the
-      -- bytewise XORs into an accumulator directly, rather than via
-      -- packZipWith, so no intermediate ByteString holding the
-      -- (secret-derived) difference bytes is ever materialised.
+      -- fused fold: OR the bytewise XORs into an accumulator
+      -- directly, rather than via packZipWith, so no intermediate
+      -- ByteString holding the (secret-derived) difference bytes
+      -- is ever materialised on the heap.
       go :: Word8 -> Int -> Bool
       go !acc !i
         | i == la   = acc == 0
