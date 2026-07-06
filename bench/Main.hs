@@ -43,11 +43,18 @@ msg_4k = BS.replicate 4096 0x42
 
 suite :: Benchmark
 suite =
-  bgroup "ppad-poly1305" [
-    bench "mac (small key)" $ nf (Poly1305.mac key_small) msg
-  , bench "mac (mid key)" $ nf (Poly1305.mac key_mid) msg
-  , bench "mac (big key)" $ nf (Poly1305.mac key_big) msg
-  , bench "mac (1024B msg)" $ nf (Poly1305.mac key_big) msg_1k
-  , bench "mac (4096B msg)" $ nf (Poly1305.mac key_big) msg_4k
-  ]
+  let !mac0 = fromJust (Poly1305.mac key_big msg)
+      !mac1 = fromJust (Poly1305.mac key_big msg_1k)
+      !mac2 = fromJust (Poly1305.mac key_big msg)
+  in  bgroup "ppad-poly1305" [
+        bench "mac (small key)" $ nf (Poly1305.mac key_small) msg
+      , bench "mac (mid key)" $ nf (Poly1305.mac key_mid) msg
+      , bench "mac (big key)" $ nf (Poly1305.mac key_big) msg
+      , bench "mac (1024B msg)" $ nf (Poly1305.mac key_big) msg_1k
+      , bench "mac (4096B msg)" $ nf (Poly1305.mac key_big) msg_4k
+      , bgroup "MAC comparison" [
+          bench "mac, unequal" $ whnf (mac0 ==) mac1
+        , bench "mac, equal" $ whnf (mac0 ==) mac2
+        ]
+      ]
 
