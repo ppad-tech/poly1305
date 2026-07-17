@@ -27,6 +27,7 @@ module Crypto.MAC.Poly1305 (
   ) where
 
 import qualified Crypto.MAC.Poly1305.Arm as Arm
+import Data.Barrier (barrier)
 import qualified Data.Bits as B
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Internal as BI
@@ -160,10 +161,13 @@ instance Eq MAC where
       -- fused fold: OR the bytewise XORs into an accumulator
       -- directly, rather than via packZipWith, so no intermediate
       -- ByteString holding the (secret-derived) difference bytes
-      -- is ever materialised on the heap.
+      -- is ever materialised on the heap. The accumulator is routed
+      -- through 'barrier' before the zero-test so the LLVM backend
+      -- cannot recover the array-equality idiom and short-circuit on
+      -- the first mismatch (see "Data.Barrier").
       go :: Word8 -> Int -> Bool
       go !acc !i
-        | i == la   = acc == 0
+        | i == la   = barrier acc == 0
         | otherwise =
             let !x = BU.unsafeIndex a i
                 !y = BU.unsafeIndex b i
