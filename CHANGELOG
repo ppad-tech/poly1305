@@ -1,5 +1,10 @@
 # Changelog
 
+- 0.4.5 (2026-07-17)
+  * Adds an optimization-opaque barrier to MAC equality comparison
+    to prevent LLVM from introducing variable-time instructions when
+    compiling with the LLVM backend.
+
 - 0.4.4 (2026-07-06)
   * Reverts the unrolled MAC comparison introduced in 0.4.3, which was
     found to introduce timing variation on both aarch64 and x86-64 when
