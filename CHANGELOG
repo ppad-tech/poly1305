@@ -1,5 +1,8 @@
 # Changelog
 
+- 0.4.6 (2026-08-01)
+  * Merely bumps the ppad-fixed dependency.
+
 - 0.4.5 (2026-07-17)
   * Adds an optimization-opaque barrier to MAC equality comparison
     to prevent LLVM from introducing variable-time instructions when
