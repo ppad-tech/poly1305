@@ -37,8 +37,8 @@ library
     ghc-options: -fllvm -O2
   exposed-modules:
       Crypto.MAC.Poly1305
-      Crypto.MAC.Poly1305.Arm
   other-modules:
+      Crypto.MAC.Poly1305.Arm
       Data.Barrier
   build-depends:
       base >= 4.9 && < 5
@@ -106,4 +106,3 @@ benchmark poly1305-weigh
     , deepseq
     , ppad-poly1305
     , weigh
-
