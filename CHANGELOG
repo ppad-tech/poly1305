@@ -1,5 +1,11 @@
 # Changelog
 
+- 0.4.8 (2026-10-31)
+  * Uses the native C kernel on x86_64 as well as aarch64, along with
+    an AVX2 4-way kernel on x86_64 CPUs that support it, detected at
+    runtime. 'mac' on such CPUs is roughly 1.5x faster on short
+    messages and 4-5x faster on long ones.
+
 - 0.4.7 (2026-10-31)
   * Bumps the ppad-fixed dependency to 0.2.1, which under the llvm
     flag on x86_64 compiles ppad-fixed with LLVM's x86 cmov converter
