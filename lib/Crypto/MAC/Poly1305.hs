@@ -26,7 +26,7 @@ module Crypto.MAC.Poly1305 (
   , _roll16
   ) where
 
-import qualified Crypto.MAC.Poly1305.Arm as Arm
+import qualified Crypto.MAC.Poly1305.Native as Native
 import Data.Barrier (barrier)
 import qualified Data.Bits as B
 import qualified Data.ByteString as BS
@@ -189,8 +189,8 @@ mac
   -> Maybe MAC     -- ^ 128-bit message authentication code
 mac key@(BI.PS _ _ kl) msg
   | kl /= 32  = Nothing
-  | Arm.poly1305_arm_available =
-      pure $! MAC (Arm.mac key msg)
+  | Native.poly1305_native_available =
+      pure $! MAC (Native.mac key msg)
   | otherwise =
       let (clamp . _roll16 -> r, _roll16 -> s) = BS.splitAt 16 key
       in  pure $! (MAC (_poly1305_loop r s msg))

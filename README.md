@@ -31,10 +31,11 @@ Haddocks (API documentation, etc.) are hosted at
 
 ## Performance
 
-The aim is best-in-class performance. Current benchmark figures on the
-simple "sunscreen input" from RFC8439 on an M4 Silicon MacBook Air,
-where we avail of hardware acceleration via ARM NEON intrinsics, look
-like (use `cabal bench` to run the benchmark suite):
+The aim is best-in-class performance. We avail of hardware
+acceleration via ARM NEON intrinsics on aarch64, and x86 AVX2
+intrinsics on x86_64 whenever the CPU supports them. Current benchmark
+figures on the simple "sunscreen input" from RFC8439 on an M4 Silicon
+MacBook Air look like (use `cabal bench` to run the benchmark suite):
 
 ```
   benchmarking ppad-poly1305/mac (big key)
@@ -44,7 +45,7 @@ like (use `cabal bench` to run the benchmark suite):
   std dev              742.4 ps   (489.7 ps .. 1.169 ns)
 ```
 
-On longer inputs the NEON 4-way parallel kernel kicks in, with
+On longer inputs the 4-way parallel kernel kicks in, with
 correspondingly better throughput:
 
 ```
