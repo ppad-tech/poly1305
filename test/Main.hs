@@ -6,7 +6,10 @@
 module Main where
 
 import qualified Crypto.MAC.Poly1305 as Poly1305
+import Data.Bits ((.&.))
+import qualified Data.ByteString as BS
 import qualified Data.ByteString.Base16 as B16
+import Data.Foldable (for_)
 import Test.Tasty
 import qualified Test.Tasty.HUnit as H
 
@@ -24,6 +27,7 @@ main = defaultMain $ testGroup "ppad-poly1305" [
   , mac9
   , mac10
   , mac11
+  , dispatch
   ]
 
 mac :: TestTree
@@ -172,3 +176,29 @@ mac11 = H.testCase "mac (A.3 #11)" $ do
       out = Poly1305._poly1305_loop r s msg
   H.assertEqual mempty tag out
 
+-- dispatching vs pure
+
+-- the dispatching 'mac' agrees with the pure Haskell loop for every
+-- message length from 0 to 640 bytes, covering partial blocks, short
+-- tails, and any vectorised paths
+dispatch :: TestTree
+dispatch = H.testCase "mac (dispatch vs pure)" $
+  for_ keys $ \key ->
+  for_ msgs $ \m ->
+  for_ [0..640] $ \l -> do
+    let msg = BS.take l m
+        Just out = Poly1305.mac key msg
+    H.assertEqual ("length " <> show l) (Poly1305.MAC (ref key msg)) out
+  where
+    Just clamp = B16.decode "ffffff0ffcffff0ffcffff0ffcffff0f"
+    Just key0 = B16.decode
+      "85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b"
+    keys = [key0, BS.replicate 32 0xff]
+    msgs = [ BS.pack [fromIntegral (i * 7 + 3) | i <- [0..639 :: Int]]
+           , BS.replicate 640 0xff
+           ]
+    ref key msg =
+      let (k0, k1) = BS.splitAt 16 key
+          r = Poly1305._roll16 (BS.packZipWith (.&.) clamp k0)
+          s = Poly1305._roll16 k1
+      in  Poly1305._poly1305_loop r s msg
