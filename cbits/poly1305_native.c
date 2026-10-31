@@ -3,20 +3,23 @@
 #include <string.h>
 
 #if defined(__aarch64__)
-
 #include <arm_neon.h>
+#endif
+
+#if defined(__aarch64__) || defined(__x86_64__)
 
 /*
- * Poly1305 (RFC 8439).  ARM acceleration via two paths:
+ * Poly1305 (RFC 8439), via two paths:
  *
- *  1. A scalar 26-bit-limb kernel using 64-bit native arithmetic for
- *     the limb multiplications.  Used for setup (precomputing r^k),
+ *  1. A portable scalar 26-bit-limb kernel using 64-bit native
+ *     arithmetic for the limb multiplications, compiled on both
+ *     aarch64 and x86_64.  Used for setup (precomputing r^k),
  *     for messages shorter than 64 bytes, and for the < 4-block tail
  *     of longer messages.  Also serves as the stage-1 reference; the
  *     NEON kernel below was added in a separate commit.
  *
- *  2. A NEON 4-way parallel kernel (when at least 4 full blocks
- *     remain).  Layout: 5 'uint32x4_t' limb vectors hold one limb
+ *  2. On aarch64, a NEON 4-way parallel kernel (when at least 4 full
+ *     blocks remain).  Layout: 5 'uint32x4_t' limb vectors hold one limb
  *     position each across 4 message blocks; matching r-power
  *     vectors hold (r^4, r^3, r^2, r^1) at the same limb position.
  *     For each output position d_j we accumulate 5 partial products
@@ -108,6 +111,8 @@ static inline void scalar_block(uint32_t h[5], const uint32_t r[5],
 
     mul_mod_p(hl, r, h);
 }
+
+#if defined(__aarch64__)
 
 /*
  * 4-block NEON update.  Computes:
@@ -226,6 +231,8 @@ static void neon4_block(uint32_t h[5],
     h[4] = (uint32_t)d4;
 }
 
+#endif
+
 /*
  * Compute a 16-byte Poly1305 MAC over 'msg' (length 'msglen') using
  * the 32-byte 'key'.  Writes the tag to 'mac_out'.
@@ -254,6 +261,7 @@ void poly1305_mac_native(const uint8_t key[32], const uint8_t *msg,
 
     size_t pos = 0;
 
+#if defined(__aarch64__)
     /* NEON 4-way path: amortizing the r^2/r^3/r^4 precomputation
      * (3 scalar mul_mod_p calls) needs about 4 NEON iterations to
      * break even versus the scalar block loop, so only engage it
@@ -269,6 +277,7 @@ void poly1305_mac_native(const uint8_t key[32], const uint8_t *msg,
             pos += 64;
         }
     }
+#endif
 
     /* Scalar tail: any remaining full blocks (< 4 of them). */
     while (pos + 16 <= msglen) {

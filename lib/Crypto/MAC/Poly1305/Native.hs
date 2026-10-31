@@ -7,7 +7,8 @@
 -- License: MIT
 -- Maintainer: Jared Tobin <jared@ppad.tech>
 --
--- ARM acceleration for the Poly1305 MAC.
+-- A native C kernel for the Poly1305 MAC on aarch64 and x86_64, with
+-- ARM NEON acceleration.
 
 module Crypto.MAC.Poly1305.Native (
     poly1305_native_available
@@ -39,7 +40,7 @@ fi = fromIntegral
 
 -- api ------------------------------------------------------------------------
 
--- | Are ARM extensions available?
+-- | Is the native kernel available?
 poly1305_native_available :: Bool
 poly1305_native_available =
   unsafeDupablePerformIO c_poly1305_native_available /= 0
