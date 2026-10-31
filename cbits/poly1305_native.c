@@ -4,6 +4,9 @@
 
 #if defined(__aarch64__)
 #include <arm_neon.h>
+#elif defined(__x86_64__)
+#include <cpuid.h>
+#include <immintrin.h>
 #endif
 
 #if defined(__aarch64__) || defined(__x86_64__)
@@ -18,15 +21,20 @@
  *     of longer messages.  Also serves as the stage-1 reference; the
  *     NEON kernel below was added in a separate commit.
  *
- *  2. On aarch64, a NEON 4-way parallel kernel (when at least 4 full
- *     blocks remain).  Layout: 5 'uint32x4_t' limb vectors hold one limb
- *     position each across 4 message blocks; matching r-power
+ *  2. A 4-way parallel kernel (when at least 4 full blocks remain).
+ *     On aarch64 it uses NEON: 5 'uint32x4_t' limb vectors hold one
+ *     limb position each across 4 message blocks; matching r-power
  *     vectors hold (r^4, r^3, r^2, r^1) at the same limb position.
  *     For each output position d_j we accumulate 5 partial products
  *     across both vector halves with 'vmull'/'vmlal', then
  *     horizontally sum the 4 lanes with 'vaddvq_u64'.  The same
  *     carry-propagation pattern as the scalar path reduces back to
  *     26-bit limbs.
+ *
+ *     On x86_64 it uses AVX2, where the CPU supports it, with the
+ *     same structure: one '__m256i' per limb position, one 64-bit
+ *     lane per block, and '_mm256_mul_epu32' in place of
+ *     'vmull'/'vmlal'.
  *
  * Reduction rule (used in both paths): 2^130 = 5 (mod 2^130 - 5),
  * so any partial product whose 'position' exceeds 4 folds back as
@@ -231,6 +239,170 @@ static void neon4_block(uint32_t h[5],
     h[4] = (uint32_t)d4;
 }
 
+#elif defined(__x86_64__)
+
+/*
+ * Return 1 if the CPU implements AVX2 and the OS preserves the YMM
+ * registers across context switches, 0 otherwise.
+ */
+static int avx2_supported(void) {
+    unsigned int eax, ebx, ecx, edx, xcr0_lo, xcr0_hi;
+    if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx))
+        return 0;
+    if (!(ecx & bit_OSXSAVE) || !(ecx & bit_AVX))
+        return 0;
+    /* XCR0 bits 1 and 2: XMM and YMM state enabled by the OS */
+    __asm__("xgetbv" : "=a"(xcr0_lo), "=d"(xcr0_hi) : "c"(0));
+    if ((xcr0_lo & 6) != 6)
+        return 0;
+    if (!__get_cpuid_count(7, 0, &eax, &ebx, &ecx, &edx))
+        return 0;
+    return (ebx & bit_AVX2) != 0;
+}
+
+/*
+ * 'avx2_supported', computed once.  CPUID is slow, and may trap to
+ * the hypervisor under virtualisation.  Racing first calls store the
+ * same value, so relaxed atomics suffice.
+ */
+static int have_avx2(void) {
+    static int cached = -1;
+    int v = __atomic_load_n(&cached, __ATOMIC_RELAXED);
+    if (v < 0) {
+        v = avx2_supported();
+        __atomic_store_n(&cached, v, __ATOMIC_RELAXED);
+    }
+    return v;
+}
+
+/* Sum the four 64-bit lanes of 'v'. */
+__attribute__((target("avx2")))
+static inline uint64_t hsum4(__m256i v) {
+    __m128i s = _mm_add_epi64(_mm256_castsi256_si128(v),
+                              _mm256_extracti128_si256(v, 1));
+    s = _mm_add_epi64(s, _mm_unpackhi_epi64(s, s));
+    return (uint64_t)_mm_cvtsi128_si64(s);
+}
+
+/*
+ * AVX2 4-block update, computing the same thing as the NEON kernel:
+ *
+ *   h := (h + m_0)*r^4 + m_1*r^3 + m_2*r^2 + m_3*r^1   mod p
+ *
+ * for each successive 64-byte group of 'msg', while 'msglen' allows.
+ * Returns the number of bytes consumed.
+ *
+ * Each '__m256i' holds one limb position across four blocks, one limb
+ * per 64-bit lane.  '_mm256_mul_epu32' multiplies the low 32 bits of
+ * each lane into a 64-bit product, so it plays the role of NEON's
+ * 'vmull'/'vmlal' pairs, with a single vector covering all 4 lanes.
+ *
+ * Compiled for AVX2 only; callers must first check 'have_avx2'.
+ */
+__attribute__((target("avx2")))
+static size_t avx2_blocks(uint32_t h[5],
+                          const uint32_t r1[5], const uint32_t r2[5],
+                          const uint32_t r3[5], const uint32_t r4[5],
+                          const uint8_t *msg, size_t msglen) {
+    /* rv[i] = (r^4[i], r^3[i], r^2[i], r^1[i]), lowest lane first.  */
+    __m256i rv0 = _mm256_setr_epi64x(r4[0], r3[0], r2[0], r1[0]);
+    __m256i rv1 = _mm256_setr_epi64x(r4[1], r3[1], r2[1], r1[1]);
+    __m256i rv2 = _mm256_setr_epi64x(r4[2], r3[2], r2[2], r1[2]);
+    __m256i rv3 = _mm256_setr_epi64x(r4[3], r3[3], r2[3], r1[3]);
+    __m256i rv4 = _mm256_setr_epi64x(r4[4], r3[4], r2[4], r1[4]);
+
+    /* 5 * r-powers, for partial products whose position wraps past
+     * 4 (mod 2^130 - 5 = 5).                                       */
+    __m256i rv1_5 = _mm256_add_epi64(_mm256_slli_epi64(rv1, 2), rv1);
+    __m256i rv2_5 = _mm256_add_epi64(_mm256_slli_epi64(rv2, 2), rv2);
+    __m256i rv3_5 = _mm256_add_epi64(_mm256_slli_epi64(rv3, 2), rv3);
+    __m256i rv4_5 = _mm256_add_epi64(_mm256_slli_epi64(rv4, 2), rv4);
+
+    size_t pos = 0;
+    while (pos + 64 <= msglen) {
+        const uint8_t *m = msg + pos;
+
+        /* Limbify the four blocks. */
+        uint32_t b0[5], b1[5], b2[5], b3[5];
+        blk2limbs(m,      1, b0);
+        blk2limbs(m + 16, 1, b1);
+        blk2limbs(m + 32, 1, b2);
+        blk2limbs(m + 48, 1, b3);
+
+        /* Fold the running accumulator into the first block. */
+        b0[0] += h[0]; b0[1] += h[1]; b0[2] += h[2];
+        b0[3] += h[3]; b0[4] += h[4];
+
+        /* mv[i] = (b0[i], b1[i], b2[i], b3[i]), lowest lane first. */
+        __m256i mv0 = _mm256_setr_epi64x(b0[0], b1[0], b2[0], b3[0]);
+        __m256i mv1 = _mm256_setr_epi64x(b0[1], b1[1], b2[1], b3[1]);
+        __m256i mv2 = _mm256_setr_epi64x(b0[2], b1[2], b2[2], b3[2]);
+        __m256i mv3 = _mm256_setr_epi64x(b0[3], b1[3], b2[3], b3[3]);
+        __m256i mv4 = _mm256_setr_epi64x(b0[4], b1[4], b2[4], b3[4]);
+
+#define MUL(m_, r_)      _mm256_mul_epu32(m_, r_)
+#define MLA(acc, m_, r_) _mm256_add_epi64(acc, _mm256_mul_epu32(m_, r_))
+
+        __m256i t;
+
+        t = MUL(mv0, rv0);
+        t = MLA(t, mv1, rv4_5);
+        t = MLA(t, mv2, rv3_5);
+        t = MLA(t, mv3, rv2_5);
+        t = MLA(t, mv4, rv1_5);
+        uint64_t d0 = hsum4(t);
+
+        t = MUL(mv0, rv1);
+        t = MLA(t, mv1, rv0);
+        t = MLA(t, mv2, rv4_5);
+        t = MLA(t, mv3, rv3_5);
+        t = MLA(t, mv4, rv2_5);
+        uint64_t d1 = hsum4(t);
+
+        t = MUL(mv0, rv2);
+        t = MLA(t, mv1, rv1);
+        t = MLA(t, mv2, rv0);
+        t = MLA(t, mv3, rv4_5);
+        t = MLA(t, mv4, rv3_5);
+        uint64_t d2 = hsum4(t);
+
+        t = MUL(mv0, rv3);
+        t = MLA(t, mv1, rv2);
+        t = MLA(t, mv2, rv1);
+        t = MLA(t, mv3, rv0);
+        t = MLA(t, mv4, rv4_5);
+        uint64_t d3 = hsum4(t);
+
+        t = MUL(mv0, rv4);
+        t = MLA(t, mv1, rv3);
+        t = MLA(t, mv2, rv2);
+        t = MLA(t, mv3, rv1);
+        t = MLA(t, mv4, rv0);
+        uint64_t d4 = hsum4(t);
+
+#undef MUL
+#undef MLA
+
+        /* Carry propagation, same shape as 'mul_mod_p'. */
+        uint64_t c;
+        c = d0 >> 26; d0 &= MASK26; d1 += c;
+        c = d1 >> 26; d1 &= MASK26; d2 += c;
+        c = d2 >> 26; d2 &= MASK26; d3 += c;
+        c = d3 >> 26; d3 &= MASK26; d4 += c;
+        c = d4 >> 26; d4 &= MASK26; d0 += c * 5;
+        c = d0 >> 26; d0 &= MASK26; d1 += c;
+
+        h[0] = (uint32_t)d0;
+        h[1] = (uint32_t)d1;
+        h[2] = (uint32_t)d2;
+        h[3] = (uint32_t)d3;
+        h[4] = (uint32_t)d4;
+
+        pos += 64;
+    }
+    return pos;
+}
+
 #endif
 
 /*
@@ -276,6 +448,19 @@ void poly1305_mac_native(const uint8_t key[32], const uint8_t *msg,
             neon4_block(h, r, r2, r3, r4, msg + pos);
             pos += 64;
         }
+    }
+#elif defined(__x86_64__)
+    /* AVX2 4-way path, where the CPU supports it.  The scalar kernel
+     * is slower here relative to the r^2/r^3/r^4 precomputation than
+     * on aarch64, so two AVX2 iterations (128 bytes) already break
+     * even.                                                        */
+    if (msglen >= 128 && have_avx2()) {
+        uint32_t r2[5], r3[5], r4[5];
+        mul_mod_p(r,  r,  r2);
+        mul_mod_p(r2, r,  r3);
+        mul_mod_p(r3, r,  r4);
+
+        pos = avx2_blocks(h, r, r2, r3, r4, msg, msglen);
     }
 #endif
 

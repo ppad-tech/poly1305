@@ -8,7 +8,7 @@
 -- Maintainer: Jared Tobin <jared@ppad.tech>
 --
 -- A native C kernel for the Poly1305 MAC on aarch64 and x86_64, with
--- ARM NEON acceleration.
+-- ARM NEON or x86 AVX2 acceleration.
 
 module Crypto.MAC.Poly1305.Native (
     poly1305_native_available
