@@ -230,8 +230,8 @@ static void neon4_block(uint32_t h[5],
  * Compute a 16-byte Poly1305 MAC over 'msg' (length 'msglen') using
  * the 32-byte 'key'.  Writes the tag to 'mac_out'.
  */
-void poly1305_mac_arm(const uint8_t key[32], const uint8_t *msg,
-                      size_t msglen, uint8_t mac_out[16]) {
+void poly1305_mac_native(const uint8_t key[32], const uint8_t *msg,
+                         size_t msglen, uint8_t mac_out[16]) {
     /* clamp r */
     uint32_t t0, t1, t2, t3;
     memcpy(&t0, key,      4);
@@ -342,18 +342,18 @@ void poly1305_mac_arm(const uint8_t key[32], const uint8_t *msg,
     memcpy(mac_out + 12, &o3, 4);
 }
 
-int poly1305_arm_available(void) {
+int poly1305_native_available(void) {
     return 1;
 }
 
 #else
 
-void poly1305_mac_arm(const uint8_t *key, const uint8_t *msg,
-                      size_t msglen, uint8_t *mac_out) {
+void poly1305_mac_native(const uint8_t *key, const uint8_t *msg,
+                         size_t msglen, uint8_t *mac_out) {
     (void)key; (void)msg; (void)msglen; (void)mac_out;
 }
 
-int poly1305_arm_available(void) {
+int poly1305_native_available(void) {
     return 0;
 }
 
